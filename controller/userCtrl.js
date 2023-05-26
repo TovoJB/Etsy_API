@@ -1,6 +1,6 @@
 const User = require("../models/userModel")
 const asyncHandler = require("express-async-handler")
-
+const generateTkon = require("../config/jwtToken")
 
 const createUser = asyncHandler(
     async (req , res)=>{
@@ -24,7 +24,14 @@ const loginUserCtrl = asyncHandler(async(req , res )=>{
     // console.log(email , password);
     const findeUser = await  User.findOne( {email })
     if(findeUser && await findeUser.isPasswordMatched(password)){
-        res.json(findeUser)
+        res.json({
+            _id: findeUser?._id ,
+            firstname: findeUser?.firstname ,
+            lastname: findeUser?.lastname ,
+            email: findeUser?.email ,
+            mobile: findeUser?.mobile ,
+            token: generateTkon(findeUser?._id)
+        });
     }else{
         throw new Error('invalide email ou mot de passe')
     }
