@@ -38,7 +38,16 @@ const loginUserCtrl = asyncHandler(async(req , res )=>{
    
 });
 
+// get all user
+
+const getallUser = asyncHandler(async(req , res )=>{
+   try{
+    const getUser = await  User.find()
+    res.json(getUser)
+   }catch(erro){
+    throw new Error(erro)
+   }
+});
 
 
-
-module.exports = { createUser ,loginUserCtrl  } ; 
+module.exports = { createUser ,loginUserCtrl , getallUser } ; 
