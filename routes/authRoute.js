@@ -1,12 +1,18 @@
 const express = require('express');
-const { createUser ,loginUserCtrl , getallUser ,getaUser , delateaUser , udateauser } = require('../controller/userCtrl');
-const authMidlleware  = require("../middlewares/authMiddleware")
+const { createUser ,loginUserCtrl , getallUser ,getaUser , delateaUser , updateauser , blockUser , unblockUser,handleRefreshToken , logout} = require('../controller/userCtrl');
+const {authMidlleware , isAdmin}  = require("../middlewares/authMiddleware")
 const router = express.Router();
 router.post("/register" , createUser);
 router.post("/login" , loginUserCtrl);
 router.get("/all-user" ,getallUser);
-router.get("/:id" , authMidlleware ,getaUser);
+router.get("/refresh" , handleRefreshToken);
+router.get("/logout" , logout);
+
+router.get("/:id" , authMidlleware , isAdmin ,getaUser);
 router.delete("/:id" ,delateaUser);
-router.put("/:id" ,udateauser);
+router.put("/edit_user" , authMidlleware ,updateauser);
+router.put("/block_user/:id" , authMidlleware ,isAdmin,blockUser);
+router.put("/unblock_user/:id" , authMidlleware ,isAdmin,unblockUser);
+
 
 module.exports = router

@@ -1,7 +1,11 @@
 const User = require("../models/userModel")
 const asyncHandler = require("express-async-handler")
 const generateTkon = require("../config/jwtToken")
-
+const validateMongoDbid = require("../utils/vlidateMongobdId")
+const generateRefreshTkone = require("../config/refreshtoken")
+const jwt = require("jsonwebtoken")
+//create new user
+/* ---------------------------------------------------------- */
 const createUser = asyncHandler(
     async (req , res)=>{
         const email = req.body.email ;
@@ -16,7 +20,10 @@ const createUser = asyncHandler(
         }
     }
 )
+/* ---------------------------------------------------------- */
 
+/* ---------------------------------------------------------- */
+// login
 const loginUserCtrl = asyncHandler(async(req , res )=>{
     const {email , password } =  req.body; 
 
@@ -24,6 +31,17 @@ const loginUserCtrl = asyncHandler(async(req , res )=>{
     // console.log(email , password);
     const findeUser = await  User.findOne( {email })
     if(findeUser && await findeUser.isPasswordMatched(password)){
+        const refreshToken = await generateRefreshTkone(findeUser?._id);
+        const updateuser = await User.findByIdAndUpdate(
+            findeUser.id ,{
+            refreshToken : refreshToken  
+        },{
+            new:true 
+        } );
+        res.cookie('refreshToken' , refreshToken,{
+            httpOnly:true,
+            maxAge:72 * 24*60*60*1000,
+        })
         res.json({
             _id: findeUser?._id ,
             firstname: findeUser?.firstname ,
@@ -37,31 +55,87 @@ const loginUserCtrl = asyncHandler(async(req , res )=>{
     }
    
 });
+/* ---------------------------------------------------------- */
 
+/* ---------------------------------------------------------- */
+//handle refresh token
+
+const handleRefreshToken = asyncHandler(async ( req , res)=>{
+ const cookie = req.cookies ;
+ console.log(cookie)
+ if(!cookie?.refreshToken) throw new Error('No Refresh token in cookies')
+ const refreshToken = cookie.refreshToken ;
+ console.log(refreshToken) ;
+ const user = await User.findOne({refreshToken});
+ if(!user) throw new Error('No Refresh token present in db or no matched')
+ jwt.verify(refreshToken , process.env.JWT_SECRET_KEY , (err , decoded) =>{
+   if(err || decoded.id !== user.id) {
+    throw new Error('there is something wrong with refresh token')
+   }else{
+    const accesstoken =generateTkon(user?.id);
+    res.json(accesstoken);
+   }
+});
+})
+/* ---------------------------------------------------------- */
+
+/* ---------------------------------------------------------- */
+// logout functionality
+const logout = asyncHandler(async ( req , res )=>{
+const cookie = req.cookies ;
+if(!cookie?.refreshToken) throw new Error('no refresh tokone in cookies');
+const refreshToken = cookie.refreshToken ;
+const user = await User.findOne({refreshToken});
+if(!user){
+    res.clearCookie("refreshToken",{
+        httpOnly:true,
+        secure:true,
+    });
+    return res.sendStatus(204);//forbidden
+}
+await User.findOneAndUpdate( {refreshToken} , {
+    refreshToken:"",
+});
+res.clearCookie("refreshToken",{
+    httpOnly:true ,
+    secure:true,
+});
+res.sendStatus(204);//forbidden
+});
+/* ---------------------------------------------------------- */
+
+/* ---------------------------------------------------------- */
 // get all user
 
 const getallUser = asyncHandler(async(req , res )=>{
    try{
     const getUser = await  User.find()
-    res.json(getUser)
+    res.json(getUser )
    }catch(erro){
     throw new Error(erro)
    }
 });
+/* ---------------------------------------------------------- */
 
+/* ---------------------------------------------------------- */
 // get a single user 
 const getaUser = asyncHandler( async (req , res )=>{
-    const id = req.params.id
+    const id = req.params.id ;
+    validateMongoDbid(id);
    try{
-    const getauser = await User.findById(id)
-    res.json(getauser)
+    const getauser = await User.findById(id);
+    res.json(getauser);
    }catch(error){
-    throw new Error(error)
+    throw new Error(error);
    }
 })
+/* ---------------------------------------------------------- */
+
+/* ---------------------------------------------------------- */
 //update  a user
-const udateauser = asyncHandler( async (req , res )=>{
-    const id = req.params.id
+const updateauser = asyncHandler( async (req , res )=>{
+    const id = req.user._id; 
+    validateMongoDbid(id);
    try{
     const udateaUser = await User.findByIdAndUpdate(
         id , {
@@ -79,20 +153,59 @@ const udateauser = asyncHandler( async (req , res )=>{
     throw new Error(error)
    }
 })
+/* ---------------------------------------------------------- */
 
-
-
-
+/* ---------------------------------------------------------- */
 //deleate a user
 const delateaUser = asyncHandler( async (req , res )=>{
-    const id = req.params.id
+    const id = req.params.id ;
+    validateMongoDbid(id) ;
    try{
     const delategetauser = await User.findByIdAndDelete(id)
     res.json(delategetauser)
    }catch(error){
     throw new Error(error)
    }
+
 })
+
+/* ---------------------------------------------------------- */
+const blockUser = asyncHandler(async(req , res )=>{
+    const {id} = req.params ;
+    validateMongoDbid(id) ;
+    try{
+        const blockuser = await User.findByIdAndUpdate(
+            id , {
+                isBlock:true
+            },{
+                new:true
+            }
+        )
+        res.json(blockuser)
+    }catch(error){
+        throw new Error (error);
+    }
+})
+/* ---------------------------------------------------------- */
+
+/* ---------------------------------------------------------- */
+const unblockUser = asyncHandler(async(req , res )=>{
+    const {id} = req.params ;
+    validateMongoDbid(id) ;
+    try{
+        const unblockuser = await User.findByIdAndUpdate(
+            id , {
+                isBlock:false
+            },{
+                new:true
+            }
+        )
+        res.json(unblockuser)
+    }catch(error){
+        throw new Error (error);
+    }
+})
+/* ---------------------------------------------------------- */
 
 
 module.exports = {
@@ -101,5 +214,9 @@ module.exports = {
      getallUser , 
      getaUser , 
      delateaUser , 
-     udateauser
+     updateauser,
+     unblockUser,
+     blockUser ,
+     handleRefreshToken,
+     logout,
     } ; 

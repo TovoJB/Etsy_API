@@ -28,12 +28,19 @@ var userSchema = new mongoose.Schema({
         type:String,
         default:"user"
     },
-   cart:{
-    type:Array,
-    default:[] , 
+    isBlock:{
+        type:Boolean,
+        default:false
+    },
+    cart:{
+     type:Array,
+     default:[] , 
    },
    address : [{type: mongoose.Schema.Types.ObjectId, ref:"Address"}],
    wishlist: [{type: mongoose.Schema.Types.ObjectId , ref:"Product"}],
+   refreshToken: {
+    type: String,
+   }
 },{
     timestamps: true,
 });
