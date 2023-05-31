@@ -209,7 +209,7 @@ const unblockUser = asyncHandler(async(req , res )=>{
 
 const updatePassword = asyncHandler(async(req,res)=>{
     const {_id} = req.user;
-    const password=req.body.password.toString();
+    const {password}=req.body;
     validateMongoDbid(_id);
     const user = await User.findById(_id);
     if(password){
@@ -220,6 +220,19 @@ const updatePassword = asyncHandler(async(req,res)=>{
         res.json(user);
     }
 })
+
+// TRIE USER 
+/*const trieUser = asyncHandler(async(req,res)=>{
+    const {firstname}  = req.paramse. ;
+    try{
+        const trieuser = await User.findOne(firstname)
+        res.json(trieuser);
+    }catch(error){
+
+    }
+})*/
+
+
 
 module.exports = {
      createUser ,
@@ -232,5 +245,6 @@ module.exports = {
      blockUser ,
      handleRefreshToken,
      logout,
-     updatePassword
+     updatePassword,
+    
     } ; 
