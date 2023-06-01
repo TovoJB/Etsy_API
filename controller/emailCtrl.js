@@ -9,18 +9,18 @@ let transporter = nodemailer.createTransport({
     port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
-      user: testAccount.user, // generated ethereal user
-      pass: testAccount.pass, // generated ethereal password
+      user: process.env.MAIL_ID, // generated ethereal user
+      pass: process.env.MP, // generated ethereal password
     },
   });
 
   // send mail with defined transport object
   let info = await transporter.sendMail({
-    from: '"Fred Foo 👻" <foo@example.com>', // sender address
-    to: "bar@example.com, baz@example.com", // list of receivers
-    subject: "Hello ✔", // Subject line
-    text: "Hello world?", // plain text body
-    html: "<b>Hello world?</b>", // html body
+    from: '" Hey 👻" <abc@gmail.com.com>', // sender address
+    to: data.to , // list of receivers
+    subject: data.subject , // Subject line
+    text: data.text, // plain text body
+    html: data.htm0, // html body
   });
 
   console.log("Message sent: %s", info.messageId);
